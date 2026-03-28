@@ -1,0 +1,13 @@
+{
+    "entry": "index.js",
+    "name": "UserMigrate",
+    "type": "lse-quickjs",
+    "version": "1.0.0",
+    "author": "冰凌呀",
+    "description": "帐号迁移插件",
+    "dependencies": [
+        {
+            "name": "legacy-script-engine-quickjs"
+        }
+    ]
+}
