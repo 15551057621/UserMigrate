@@ -24,9 +24,22 @@ const userMigrate = {
     iland: (oldName, newName) => {
         if (!ll.hasExported("ILAPI_PosGetLand")) return;
 
-        const oldUuld = data.name2uuid(oldName);
-        const newUuld = data.name2uuid(newName);
+        const oldXuid = data.name2xuid(oldName);
+        const newXuld = data.name2xuid(newName);
 
+        if (!oldXuid && !newXuld) return;
 
+        // 文件关键词替换可以同时解决被信任和拥有领地
+        // 但是会与iland插件导致数据竞争问题
+
+        const oldLands = ll.imports("ILAPI_GetPlayerLands")(oldXuid);
+        
+        ll.imports("ILAPI_GetPlayerLands")(newXuid).forEach(id => {
+            ll.imports("ILAPI_SetOwner")(id, oldXuld);
+        });
+        
+        oldLands.forEach(id => {
+            ll.imports("ILAPI_SetOwner")(id, newXuld);
+        });
     }
 }
