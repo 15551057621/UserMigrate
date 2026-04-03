@@ -14,11 +14,12 @@ const userMigrate = {
         mc.setPlayerNbt(newUuld, oldNbt);
 
         // === 积分榜 === //
-        mc.getAllScoreObjectives().forEach((sc) => {
+        // 不要看这个，我之前一直以为积分榜是分开存储的
+        /*mc.getAllScoreObjectives().forEach((sc) => {
             const oldSc = mc.getPlayerScore(oldUuld, sc.name);
             mc.setPlayerScore(oldUuld, sc.name, mc.getPlayerScore(newUuld, sc.name))
             mc.setPlayerScore(newUuld, sc.name, oldSc);
-        });
+        });*/
     },
 
     iland: (oldName, newName) => { // 合并领地，上面辣个是不会合并nbt才交换的
@@ -55,4 +56,5 @@ const userMigrate = {
     }
 }
 
-ll.exports(() => userMigrate, "userMigrate")
+ll.exports(() => userMigrate.mc, "userMigrate", "mc");
+ll.exports(() => userMigrate.iland, "userMigrate", "iland");
