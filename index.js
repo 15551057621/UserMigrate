@@ -6,7 +6,7 @@ const userMigrate = {
         const oldUuld = data.name2uuid(oldName);
         const newUuld = data.name2uuid(newName);
 
-        if (!oldUuld && !newUuld) return;
+        if (!oldUuld && !newUuld) return false;
 
         // === NBT === //
         const oldNbt = mc.getPlayerNbt(oldUuld);
@@ -14,32 +14,45 @@ const userMigrate = {
         mc.setPlayerNbt(newUuld, oldNbt);
 
         // === 积分榜 === //
-        mc.getAllScoreObjectives().forEach(sc => {
+        mc.getAllScoreObjectives().forEach((sc) => {
             const oldSc = mc.getPlayerScore(oldUuld, sc.name);
             mc.setPlayerScore(oldUuld, sc.name, mc.getPlayerScore(newUuld, sc.name))
             mc.setPlayerScore(newUuld, sc.name, oldSc);
         });
-        
     },
-    iland: (oldName, newName) => {
-        if (!ll.hasExported("ILAPI_PosGetLand")) return;
+
+    iland: (oldName, newName) => { // 合并领地，上面辣个是不会合并nbt才交换的
+        if (!ll.hasExported("ILAPI_PosGetLand")) return false;
 
         const oldXuid = data.name2xuid(oldName);
-        const newXuld = data.name2xuid(newName);
+        const newXuid = data.name2xuid(newName);
 
-        if (!oldXuid && !newXuld) return;
+        if (!oldXuid && !newXuid) return false;
 
-        // 文件关键词替换可以同时解决被信任和拥有领地
-        // 但是会与iland插件导致数据竞争问题
+        // 先捕获，然后钓鱼，性能可能更好（？
+        const iland = {
+            addTrust: ll.imports("ILAPI_AddTrust"),
+            delTrust: ll.imports("ILAPI_RemoveTrust"),
+            setOwner: ll.imports("ILAPI_SetOwner")
+        }
 
+        // 受信任的
+        ll.imports("ILAPI_GetAllTrustedLand")(oldXuid).forEach((landId) => {
+            iland.addTrust(landId, newXuid);
+            iland.delTrust(landId, oldXuid);
+        })
+
+        // 拥有领地
         const oldLands = ll.imports("ILAPI_GetPlayerLands")(oldXuid);
-        
-        ll.imports("ILAPI_GetPlayerLands")(newXuid).forEach(id => {
-            ll.imports("ILAPI_SetOwner")(id, oldXuld);
+
+        ll.imports("ILAPI_GetPlayerLands")(newXuid).forEach((id) => {
+            iland.setOwner(id, oldXuid);
         });
-        
-        oldLands.forEach(id => {
-            ll.imports("ILAPI_SetOwner")(id, newXuld);
+
+        oldLands.forEach((id) => {
+            iland.setOwner(id, newXuid);
         });
     }
 }
+
+ll.exports(() => userMigrate, "userMigrate")
